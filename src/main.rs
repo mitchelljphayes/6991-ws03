@@ -133,8 +133,7 @@ fn run_command(cmd: &str, buffers: &mut HashMap<String, BufferEditor>)  -> Resul
     fn create_file(filename: &str) -> &str {
         File::create(filename).unwrap();
         std::fs::write(filename, "").unwrap();
-        let contents = "";
-        return contents;
+        return "";
     }
 
     
@@ -157,9 +156,10 @@ fn run_command(cmd: &str, buffers: &mut HashMap<String, BufferEditor>)  -> Resul
         },
         "open" => {
             let buffer_name = input[1].trim();
-            if !buffers.contains_key(buffer_name) {
-                buffers.insert(String::from(buffer_name),BufferEditor {buffer: Buffer::new()});
-            }
+            // if !buffers.contains_key(buffer_name) {
+            //     buffers.insert(String::from(buffer_name),BufferEditor {buffer: Buffer::new()});
+            // }
+            buffers.entry(String::from(buffer_name)).or_insert(BufferEditor {buffer: Buffer::new()});
             let open_buffer = buffers.get_mut(buffer_name).unwrap();
             run_game(
                 open_buffer,
@@ -172,7 +172,21 @@ fn run_command(cmd: &str, buffers: &mut HashMap<String, BufferEditor>)  -> Resul
             todo!()
         },
         "copy_into" => {
-            todo!()
+            let buffer_one = input[1].clone();
+            let b2 = input[2].clone().split_once(':').unwrap();
+            let buffer_two = b2.0;
+            let b2_line_num = b2.1;
+            let open_buffer_one = buffers.get(buffer_one);
+            let open_buffer_two = buffers.get_mut(buffer_two).unwrap();
+
+            // open_buffer_two.buffer.text += open_buffer_one.buffer.text;
+            println!("{}", open_buffer_two.buffer.text);
+            let lines: Vec<&str> = open_buffer_two.buffer.text.split("\n").collect();
+            println!("{:?}",lines)
+            
+
+
+            // open_buffer_one.copy_into()
         },
         "cut_into" => {
             todo!()
