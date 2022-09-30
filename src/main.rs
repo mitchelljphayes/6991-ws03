@@ -142,10 +142,10 @@ fn run_command(
             let file_contents =
                 std::fs::read_to_string(path).unwrap_or_else(|_| create_file(path).to_string());
             editor.buffer.text = file_contents.clone();
-            buffers.insert(String::from(path), editor);
-            let buffer = buffers.get_mut(path).unwrap();
+            // buffers.insert(String::from(path),editor);
+            // let buffer = buffers.get_mut(path).unwrap();
             run_game(
-                buffer,
+                &mut editor,
                 GameSettings::new().tick_duration(Duration::from_millis(25)),
             )?;
             let buffer = buffers.get_mut(path).unwrap();
@@ -170,7 +170,9 @@ fn run_command(
             // println!("{}", buffers.get_mut(buffer_name).unwrap().buffer.text);
         }
         "search" => {
-            todo!()
+            let needle = &cmd[7..];
+
+            do_search(needle, &buffers)
         }
         "copy_into" => {
             todo!()
@@ -220,7 +222,7 @@ fn run_command(
             };
         }
         "buffer_from_command" => {
-            todo!()
+            do_buffer_from_command(input[1], input[2..].join(" ").as_str(), buffers)?;
         }
         _ => {
             println!("Command not recognised!");
@@ -249,10 +251,55 @@ fn main() -> Result<(), Box<dyn Error>> {
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => break,
             Err(err) => {
                 println!("Error: {:?}", err);
-                break;
+                break;;
             }
         }
     }
+
+    Ok(())
+}
+
+fn do_search(needle: &str, buffers: &HashMap<String, BufferEditor>) {
+    // Iterate through each buffer
+    for (buffer_name, buffer) in buffers {
+        let text = &buffer.buffer.text;
+        for (index, line) in text.lines().enumerate() {
+            if line.contains(needle) {
+                println!("{}:{} {}", buffer_name, index + 1, line);
+            }
+        }
+    }
+}
+
+use std::process::Command;
+use std::str::{self, Utf8Error};
+
+fn do_buffer_from_command(
+    buffer_name: &str,
+    args: &str,
+    buffers: &mut HashMap<String, BufferEditor>,
+) -> Result<(), Utf8Error> {
+    let args = args.split_ascii_whitespace();
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .arg("/C")
+            .args(args)
+            .output()
+            .expect("failed to execute process")
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .args(args)
+            .output()
+            .expect("failed to execute process")
+    };
+
+    let output = str::from_utf8(&output.stdout)?;
+
+    // print!("DEBUG: Output is {output}");
+    let mut buffer = Buffer::new();
+    buffer.text = output.to_string();
+    buffers.insert(String::from(buffer_name), BufferEditor { buffer });
 
     Ok(())
 }
