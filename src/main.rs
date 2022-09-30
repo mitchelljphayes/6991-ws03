@@ -51,7 +51,7 @@ impl Buffer {
     // /// You would either need to return a `Buffer`, or be sure that
     // /// the user will not want the `Buffer` anymore.
     // fn example_owned(self, another_arg: Buffer) -> Buffer {
-    //    todo!() 
+    //    todo!()
     // }
 
     // /// This is an example of a function that takes the Buffer by
@@ -137,8 +137,6 @@ fn run_command(cmd: &str, buffers: &mut HashMap<String, BufferEditor>)  -> Resul
         return contents;
     }
 
-    
-
 
     match input[0] {
         "open_file" => {
@@ -146,10 +144,10 @@ fn run_command(cmd: &str, buffers: &mut HashMap<String, BufferEditor>)  -> Resul
             let mut editor = BufferEditor {buffer: Buffer::new()};
             let file_contents = std::fs::read_to_string(path).unwrap_or_else(|_| create_file(path).to_string());
             editor.buffer.text = file_contents.clone();
-            buffers.insert(String::from(path),editor);
-            let buffer = buffers.get_mut(path).unwrap();
+            // buffers.insert(String::from(path),editor);
+            // let buffer = buffers.get_mut(path).unwrap();
             run_game(
-                buffer, 
+                &mut editor,
                 GameSettings::new().tick_duration(Duration::from_millis(25))
             )?;
             let buffer = buffers.get_mut(path).unwrap();
@@ -164,12 +162,14 @@ fn run_command(cmd: &str, buffers: &mut HashMap<String, BufferEditor>)  -> Resul
             run_game(
                 open_buffer,
                 GameSettings::new().tick_duration(Duration::from_millis(25))
-            )?; 
+            )?;
             // println!("{}", &open_buffer.buffer.text);
             // println!("{}", buffers.get_mut(buffer_name).unwrap().buffer.text);
         },
         "search" => {
-            todo!()
+            let needle = &cmd[7..];
+
+            do_search(needle, &buffers)
         },
         "copy_into" => {
             todo!()
@@ -218,4 +218,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
     Ok(())
+}
+
+fn do_search(needle: &str, buffers: &HashMap<String, BufferEditor>) {
+    // Iterate through each buffer
+    for (buffer_name, buffer) in buffers {
+        let text = &buffer.buffer.text;
+        for (index, line) in text.lines().enumerate() {
+            if line.contains(needle) {
+                println!("{}:{} {}", buffer_name, index + 1, line);
+            }
+        }
+    }
 }
